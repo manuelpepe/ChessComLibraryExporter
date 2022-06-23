@@ -9,7 +9,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 
 @dataclass
@@ -131,9 +131,13 @@ class Scrapper:
                 next_page_button = get_next_page_button(self.driver)
                 
     def _populate_page_into_collection(self, collection):
-        games = _safe_find(self.driver, By.CLASS_NAME, "game-item-component")
-        game_objects = load_games_from_page(self.driver, games)
-        collection.games.extend(game_objects)
+        try:
+            self.driver.find_element(By.CLASS_NAME, "collection-games-wrapper-no-games")
+            return
+        except NoSuchElementException:
+            games = _safe_find(self.driver, By.CLASS_NAME, "game-item-component")
+            game_objects = load_games_from_page(self.driver, games)
+            collection.games.extend(game_objects)
         
     def _end(self):
         self.driver.close()
