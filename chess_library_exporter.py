@@ -85,6 +85,12 @@ def get_next_page_button(driver) -> None | WebElement:
         return None
 
 
+def wait_next_page_load():
+    # FIXME: Instead of sleeping an arbitrary ammount, some kind of check should be performed on the UI.
+    # maybe tracking the current page and checking the specific page selector styling.
+    time.sleep(1)
+
+
 class Scrapper:
     def __init__(self):
         self.driver: WebDriver = webdriver.Chrome()
@@ -113,9 +119,8 @@ class Scrapper:
         next_page_button = get_next_page_button(self.driver)
         while next_page_button:
             next_page_button.click()
-            time.sleep(1)  # FIXME: Instead of sleeping an arbitrary ammount, some kind
-            # of check should be performed on the UI.
-            # (maybe tracking the current page and checking the specific page selector styling)            self._retrieve_collections_in_page()
+            wait_next_page_load()
+            self._retrieve_collections_in_page()
             next_page_button = get_next_page_button(self.driver)
 
     def _retrieve_collections_in_page(self):
@@ -139,9 +144,7 @@ class Scrapper:
         next_page_button = get_next_page_button(self.driver)
         while next_page_button:
             next_page_button.click()
-            time.sleep(1)  # FIXME: Instead of sleeping an arbitrary ammount, some kind
-            # of check should be performed on the UI.
-            # (maybe tracking the current page and checking the specific page selector styling)
+            wait_next_page_load()
             self._populate_page_into_collection(collection)
             next_page_button = get_next_page_button(self.driver)
 
