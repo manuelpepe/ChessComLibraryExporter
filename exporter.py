@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
-from getpass import getpass
 
 from selenium import webdriver
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -23,72 +24,91 @@ class Collection:
     games: list[Game] = field(default_factory=list)
 
 
-def _safe_find(driver, *args, func: str = "find_elements"):
+def _safe_find(driver, *args, method: str = "find_elements"):
     WebDriverWait(driver, 20).until(EC.presence_of_element_located(args))
-    return getattr(driver, func)(*args)
+    return getattr(driver, method)(*args)
 
 
-COLLECTIONS: list[Collection] = []
-
-# Request user info
-username = input("Username: ")
-password = getpass()
-
-# Init
-print("Starting...")
-driver = webdriver.Chrome()
-driver.get("https://www.chess.com/home")
-
-# Login
-print("Logging in...")
-username_input = driver.find_element(By.ID, "username")
-username_input.send_keys(username)
-password_input = driver.find_element(By.ID, "password")
-password_input.send_keys(password)
-password_input.send_keys(Keys.RETURN)
-WebDriverWait(driver, 20).until_not(EC.presence_of_element_located((By.ID, "password")))
-
-# Retrieve all collections metadata 
-print("Parsing library...")
-driver.get("https://www.chess.com/library")
-collections = _safe_find(driver, By.CLASS_NAME, "library-collection-item-component")
-print(f"Found {len(collections)} collections")
-for collection in collections:
-    title = collection.find_element(By.CLASS_NAME, "library-collection-item-link")
-    obj = Collection(title=title.text, link=title.get_attribute("href"))
-    COLLECTIONS.append(obj)
-    print(f"Found collection: '{obj.title}' ({obj.link})")
+def find_game_title(game: WebElement):
+    try:
+        _title = game.find_element(By.CLASS_NAME, "game-item-title")
+        title = _title.text
+    except NoSuchElementException as err:
+        _usernames = game.find_elements(By.CLASS_NAME, "game-item-username")
+        title = ' - '.join(u.text for u in _usernames)
+    return title
 
 
-for collection in COLLECTIONS:
-    print(f"Retrieving games from: '{collection.title}' ({collection.link})")
-    driver.get(collection.link)
-    games = _safe_find(driver, By.CLASS_NAME, "game-item-component")
-    for game in games:
-        game.click()
-        try:
-            _title = game.find_element(By.CLASS_NAME, "game-item-title")
-            title = _title.text
-        except NoSuchElementException as err:
-            _usernames = game.find_elements(By.CLASS_NAME, "game-item-username")
-            title = ' - '.join(u.text for u in _usernames)
-        _more = game.parent.find_element(By.CLASS_NAME, "game-details-more")
-        link = _more.find_element(By.CSS_SELECTOR, "a.game-details-btn-component")
-        share_button = _more.find_element(By.CSS_SELECTOR, '[aria-label="Share"]')
-        share_button.click()
-        embed_component = _safe_find(driver, By.CLASS_NAME, "share-menu-tab-embed-component", func="find_element")
-        obj = Game(
-            title=title,
-            link=link.get_attribute("href"),
-            pgn=embed_component.get_attribute("pgn")
-        )
-        collection.games.append(obj)
-        close_share_modal = _safe_find(driver, By.CLASS_NAME, "ui_outside-close-component", func="find_element")
-        close_share_modal.click()
-        game.click()
+def find_game_pgn(driver: WebDriver, game_details_box: WebElement):
+    share_button = game_details_box.find_element(By.CSS_SELECTOR, '[aria-label="Share"]')
+    share_button.click()
+    embed_component = _safe_find(driver, By.CLASS_NAME, "share-menu-tab-embed-component", method="find_element")
+    pgn = embed_component.get_attribute("pgn")
+    close_share_modal = _safe_find(driver, By.CLASS_NAME, "ui_outside-close-component", method="find_element")
+    close_share_modal.click()
+    return pgn
+
+
+class Scrapper:
+    def __init__(self):
+        self.driver: WebDriver = webdriver.Chrome()
+        self.collections: list[Collection] = []
+
+    def scrape(self, username: str, password: str):
+        self._login(username, password)
+        self._retrieve_collections_lazy()
+        self._populate_games_into_collections()
+        self._end()
+        
+    def _login(self, username, password):
+        self.driver.get("https://www.chess.com/home")
+        username_input = self.driver.find_element(By.ID, "username")
+        username_input.send_keys(username)
+        password_input = self.driver.find_element(By.ID, "password")
+        password_input.send_keys(password)
+        password_input.send_keys(Keys.RETURN)
+        WebDriverWait(self.driver, 20).until_not(EC.presence_of_element_located((By.ID, "password")))
+        
+    def _retrieve_collections_lazy(self):
+        self.driver.get("https://www.chess.com/library")
+        collections = _safe_find(self.driver, By.CLASS_NAME, "library-collection-item-component")
+        print(f"Found {len(collections)} collections")
+        for collection in collections:
+            title = collection.find_element(By.CLASS_NAME, "library-collection-item-link")
+            obj = Collection(title=title.text, link=title.get_attribute("href"))
+            self.collections.append(obj)
+            print(f"Found collection: '{obj.title}' ({obj.link})")
+            
+    def _populate_games_into_collections(self):
+        for collection in self.collections:
+            print(f"Retrieving games from: '{collection.title}' ({collection.link})")
+            self.driver.get(collection.link)
+            games = _safe_find(self.driver, By.CLASS_NAME, "game-item-component")
+            for game in games:
+                game.click()   # Expands _game_details_box
+                _game_details_box = game.parent.find_element(By.CLASS_NAME, "game-details-more")
+                link = _game_details_box.find_element(By.CSS_SELECTOR, "a.game-details-btn-component")
+                obj = Game(
+                    title=find_game_title(game),
+                    link=link.get_attribute("href"),
+                    pgn=find_game_pgn(self.driver, _game_details_box)
+                )
+                collection.games.append(obj)
+                game.click()  # Closes _game_details_box
+        
+    def _end(self):
+        self.driver.close()
+        
+    
+if __name__ == "__main__":
+    from getpass import getpass
+    from pprint import pprint
+    
+    username = input("Username: ")
+    password = getpass()
+    scrapper = Scrapper()
+    scrapper.scrape(username, password)
+    pprint(scrapper.collections)
 
 
         
-from pprint import pprint
-pprint(COLLECTIONS)
-driver.close()
