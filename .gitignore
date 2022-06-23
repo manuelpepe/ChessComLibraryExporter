@@ -1,0 +1,7 @@
+venv/
+chromedriver.exe
+__pycache__
+.pytest_cache/
+.tox/
+MANIFEST
+*.egg-info
