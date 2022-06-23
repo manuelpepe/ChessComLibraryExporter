@@ -166,8 +166,8 @@ class ScrapperAutoSaver(Scrapper):
             file = self.outdir / collection.title / f"{game.title}.pgn"
             file.write_text(game.pgn, encoding="utf-8")
             
-    
-if __name__ == "__main__":
+
+def main():
     import argparse
     from getpass import getpass
     
@@ -188,3 +188,6 @@ if __name__ == "__main__":
     scrapper = ScrapperAutoSaver(args.output)
     scrapper.scrape(username, password)
     
+
+if __name__ == "__main__":
+    main()

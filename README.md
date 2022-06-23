@@ -14,12 +14,24 @@ For info on drivers, [see this](https://selenium-python.readthedocs.io/installat
 
 With a valid driver installed and in your PATH, just run the utility and complete the Username and Password prompts.
 
+**Directly as a script:**
 
 ```bash
-$ python exporter.py
+$ python chess_library_exporter -o ~/chess-library
 Username: manuelpepe
 Password: 
 
 Found 6 collections
 ...
-````
+```
+
+**From the Pip-installed entrypoint:**
+
+```bash
+$ chess_library_exporter -o ~/chess-library
+Username: manuelpepe
+Password: 
+
+Found 6 collections
+...
+```
