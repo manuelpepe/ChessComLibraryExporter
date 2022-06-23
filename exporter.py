@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import time
 
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -118,17 +121,20 @@ class Scrapper:
                             
     def _populate_games_into_collections(self):
         for collection in self.collections:
-            print(f"Retrieving games from: '{collection.title}' ({collection.link})")
-            self.driver.get(collection.link)
+            self._populate_games_into_collection(collection)    
+            
+    def _populate_games_into_collection(self, collection: Collection):
+        print(f"Retrieving games from: '{collection.title}' ({collection.link})")
+        self.driver.get(collection.link)
+        self._populate_page_into_collection(collection)
+        next_page_button = get_next_page_button(self.driver)
+        while next_page_button:
+            next_page_button.click()
+            time.sleep(1)  # FIXME: Instead of sleeping an arbitrary ammount, some kind of check
+                            # should be performed on the UI. (maybe tracking the current page and checking
+                            # the specific page selector styling)
             self._populate_page_into_collection(collection)
             next_page_button = get_next_page_button(self.driver)
-            while next_page_button:
-                next_page_button.click()
-                time.sleep(1)  # FIXME: Instead of sleeping an arbitrary ammount, some kind of check
-                               # should be performed on the UI. (maybe tracking the current page and checking
-                               # the specific page selector styling)
-                self._populate_page_into_collection(collection)
-                next_page_button = get_next_page_button(self.driver)
                 
     def _populate_page_into_collection(self, collection):
         try:
@@ -142,16 +148,43 @@ class Scrapper:
     def _end(self):
         self.driver.close()
         
+        
+class ScrapperAutoSaver(Scrapper):
+    def __init__(self, output: Path):
+        super().__init__()
+        self.outdir = output
+    
+    def _retrieve_collections_lazy(self):
+        super()._retrieve_collections_lazy()
+        for collection in self.collections:
+            directory = self.outdir / collection.title
+            directory.mkdir()
+            
+    def _populate_games_into_collection(self, collection: Collection):
+        super()._populate_games_into_collection(collection)
+        for game in collection.games:
+            file = self.outdir / collection.title / f"{game.title}.pgn"
+            file.write_text(game.pgn, encoding="utf-8")
+            
     
 if __name__ == "__main__":
+    import argparse
     from getpass import getpass
-    from pprint import pprint
+    
+    def dir_type(value):
+        path = Path(value)
+        if not path.is_dir():
+            raise NotADirectoryError(value)
+        if len(list(path.glob("*"))) > 0:
+            raise ValueError(f"Directory {path} not empty")
+        return path
+
+    parser = argparse.ArgumentParser(description="Download your whole Chess.com Library (chess.com/library)")
+    parser.add_argument("-o", "--output", help="Directory where your library will be exported. It MUST be empty.", type=dir_type, required=True)
+    args = parser.parse_args()
     
     username = input("Username: ")
     password = getpass()
-    scrapper = Scrapper()
+    scrapper = ScrapperAutoSaver(args.output)
     scrapper.scrape(username, password)
-    pprint(scrapper.collections)
-
-
-        
+    
