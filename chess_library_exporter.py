@@ -20,7 +20,7 @@ class Game:
     title: str
     link: str
     pgn: str
-    
+
 
 @dataclass
 class Collection:
@@ -40,16 +40,20 @@ def find_game_title(game: WebElement):
         title = _title.text
     except NoSuchElementException as err:
         _usernames = game.find_elements(By.CLASS_NAME, "game-item-username")
-        title = ' - '.join(u.text for u in _usernames)
+        title = " - ".join(u.text for u in _usernames)
     return title
 
 
 def find_game_pgn(driver: WebDriver, game_details_box: WebElement):
     share_button = game_details_box.find_element(By.CSS_SELECTOR, '[aria-label="Share"]')
     share_button.click()
-    embed_component = _safe_find(driver, By.CLASS_NAME, "share-menu-tab-embed-component", method="find_element")
+    embed_component = _safe_find(
+        driver, By.CLASS_NAME, "share-menu-tab-embed-component", method="find_element"
+    )
     pgn = embed_component.get_attribute("pgn")
-    close_share_modal = _safe_find(driver, By.CLASS_NAME, "ui_outside-close-component", method="find_element")
+    close_share_modal = _safe_find(
+        driver, By.CLASS_NAME, "ui_outside-close-component", method="find_element"
+    )
     close_share_modal.click()
     return pgn
 
@@ -57,13 +61,13 @@ def find_game_pgn(driver: WebDriver, game_details_box: WebElement):
 def load_games_from_page(driver: WebDriver, games: list[WebElement]) -> list[Game]:
     game_objects = []
     for game in games:
-        game.click()   # Expands _game_details_box
+        game.click()  # Expands _game_details_box
         _game_details_box = game.parent.find_element(By.CLASS_NAME, "game-details-more")
         link = _game_details_box.find_element(By.CSS_SELECTOR, "a.game-details-btn-component")
         obj = Game(
             title=find_game_title(game),
             link=link.get_attribute("href"),
-            pgn=find_game_pgn(driver, _game_details_box)
+            pgn=find_game_pgn(driver, _game_details_box),
         )
         game_objects.append(obj)
         game.click()  # Closes _game_details_box
@@ -72,7 +76,9 @@ def load_games_from_page(driver: WebDriver, games: list[WebElement]) -> list[Gam
 
 def get_next_page_button(driver) -> None | WebElement:
     try:
-        _next_page_button = driver.find_element(By.CSS_SELECTOR,'.ui_pagination-item-component[aria-label="Next Page"]')
+        _next_page_button = driver.find_element(
+            By.CSS_SELECTOR, '.ui_pagination-item-component[aria-label="Next Page"]'
+        )
         if not _next_page_button.get_attribute("disabled"):
             return _next_page_button
     except NoSuchElementException:
@@ -89,7 +95,7 @@ class Scrapper:
         self._retrieve_collections_lazy()
         self._populate_games_into_collections()
         self._end()
-        
+
     def _login(self, username, password):
         self.driver.get("https://www.chess.com/home")
         username_input = self.driver.find_element(By.ID, "username")
@@ -97,32 +103,35 @@ class Scrapper:
         password_input = self.driver.find_element(By.ID, "password")
         password_input.send_keys(password)
         password_input.send_keys(Keys.RETURN)
-        WebDriverWait(self.driver, 20).until_not(EC.presence_of_element_located((By.ID, "password")))
-        
+        WebDriverWait(self.driver, 20).until_not(
+            EC.presence_of_element_located((By.ID, "password"))
+        )
+
     def _retrieve_collections_lazy(self):
         self.driver.get("https://www.chess.com/library")
         self._retrieve_collections_in_page()
         next_page_button = get_next_page_button(self.driver)
         while next_page_button:
             next_page_button.click()
-            time.sleep(1)   # FIXME: Instead of sleeping an arbitrary ammount, some kind of check
-                            # should be performed on the UI. (maybe tracking the current page and checking
-                            # the specific page selector styling)
-            self._retrieve_collections_in_page()
+            time.sleep(1)  # FIXME: Instead of sleeping an arbitrary ammount, some kind
+            # of check should be performed on the UI.
+            # (maybe tracking the current page and checking the specific page selector styling)            self._retrieve_collections_in_page()
             next_page_button = get_next_page_button(self.driver)
-            
+
     def _retrieve_collections_in_page(self):
-        collections = _safe_find(self.driver, By.CLASS_NAME, "library-collection-item-component")
+        collections = _safe_find(
+            self.driver, By.CLASS_NAME, "library-collection-item-component"
+        )
         for collection in collections:
             title = collection.find_element(By.CLASS_NAME, "library-collection-item-link")
             obj = Collection(title=title.text, link=title.get_attribute("href"))
             self.collections.append(obj)
             print(f"Found collection: '{obj.title}' ({obj.link})")
-                            
+
     def _populate_games_into_collections(self):
         for collection in self.collections:
-            self._populate_games_into_collection(collection)    
-            
+            self._populate_games_into_collection(collection)
+
     def _populate_games_into_collection(self, collection: Collection):
         print(f"Retrieving games from: '{collection.title}' ({collection.link})")
         self.driver.get(collection.link)
@@ -130,12 +139,12 @@ class Scrapper:
         next_page_button = get_next_page_button(self.driver)
         while next_page_button:
             next_page_button.click()
-            time.sleep(1)  # FIXME: Instead of sleeping an arbitrary ammount, some kind of check
-                            # should be performed on the UI. (maybe tracking the current page and checking
-                            # the specific page selector styling)
+            time.sleep(1)  # FIXME: Instead of sleeping an arbitrary ammount, some kind
+            # of check should be performed on the UI.
+            # (maybe tracking the current page and checking the specific page selector styling)
             self._populate_page_into_collection(collection)
             next_page_button = get_next_page_button(self.driver)
-                
+
     def _populate_page_into_collection(self, collection):
         try:
             self.driver.find_element(By.CLASS_NAME, "collection-games-wrapper-no-games")
@@ -144,33 +153,33 @@ class Scrapper:
             games = _safe_find(self.driver, By.CLASS_NAME, "game-item-component")
             game_objects = load_games_from_page(self.driver, games)
             collection.games.extend(game_objects)
-        
+
     def _end(self):
         self.driver.close()
-        
-        
+
+
 class ScrapperAutoSaver(Scrapper):
     def __init__(self, output: Path):
         super().__init__()
         self.outdir = output
-    
+
     def _retrieve_collections_lazy(self):
         super()._retrieve_collections_lazy()
         for collection in self.collections:
             directory = self.outdir / collection.title
             directory.mkdir()
-            
+
     def _populate_games_into_collection(self, collection: Collection):
         super()._populate_games_into_collection(collection)
         for game in collection.games:
             file = self.outdir / collection.title / f"{game.title}.pgn"
             file.write_text(game.pgn, encoding="utf-8")
-            
+
 
 def main():
     import argparse
     from getpass import getpass
-    
+
     def dir_type(value):
         path = Path(value)
         if not path.is_dir():
@@ -179,15 +188,23 @@ def main():
             raise ValueError(f"Directory {path} not empty")
         return path
 
-    parser = argparse.ArgumentParser(description="Download your whole Chess.com Library (chess.com/library)")
-    parser.add_argument("-o", "--output", help="Directory where your library will be exported. It MUST be empty.", type=dir_type, required=True)
+    parser = argparse.ArgumentParser(
+        description="Download your whole Chess.com Library (chess.com/library)"
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Directory where your library will be exported. It MUST be empty.",
+        type=dir_type,
+        required=True,
+    )
     args = parser.parse_args()
-    
+
     username = input("Username: ")
     password = getpass()
     scrapper = ScrapperAutoSaver(args.output)
     scrapper.scrape(username, password)
-    
+
 
 if __name__ == "__main__":
     main()
