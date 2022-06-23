@@ -98,14 +98,24 @@ class Scrapper:
         
     def _retrieve_collections_lazy(self):
         self.driver.get("https://www.chess.com/library")
+        self._retrieve_collections_in_page()
+        next_page_button = get_next_page_button(self.driver)
+        while next_page_button:
+            next_page_button.click()
+            time.sleep(1)   # FIXME: Instead of sleeping an arbitrary ammount, some kind of check
+                            # should be performed on the UI. (maybe tracking the current page and checking
+                            # the specific page selector styling)
+            self._retrieve_collections_in_page()
+            next_page_button = get_next_page_button(self.driver)
+            
+    def _retrieve_collections_in_page(self):
         collections = _safe_find(self.driver, By.CLASS_NAME, "library-collection-item-component")
-        print(f"Found {len(collections)} collections")
         for collection in collections:
             title = collection.find_element(By.CLASS_NAME, "library-collection-item-link")
             obj = Collection(title=title.text, link=title.get_attribute("href"))
             self.collections.append(obj)
             print(f"Found collection: '{obj.title}' ({obj.link})")
-            
+                            
     def _populate_games_into_collections(self):
         for collection in self.collections:
             print(f"Retrieving games from: '{collection.title}' ({collection.link})")
