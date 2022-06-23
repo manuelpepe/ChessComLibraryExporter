@@ -1,5 +1,4 @@
 from distutils.core import setup
-from importlib.metadata import entry_points
 
 setup(
     name="ChessComLibraryExport",
@@ -10,9 +9,5 @@ setup(
     url="https://github.com/manuelpepe/ChessComLibraryExporter",
     py_modules=["chess_library_exporter"],
     install_requires=["selenium"],
-    entry_points={
-        'console_scripts': [
-            "chess_library_exporter = chess_library_exporter:main"
-        ]
-    }
+    entry_points={"console_scripts": ["chess_library_exporter = chess_library_exporter:main"]},
 )
