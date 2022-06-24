@@ -61,7 +61,10 @@ def find_game_pgn(driver: WebDriver, game_details_box: WebElement):
 def load_games_from_page(driver: WebDriver, games: list[WebElement]) -> list[Game]:
     game_objects = []
     for game in games:
-        game.click()  # Expands _game_details_box
+        toggle = game.find_elements(By.TAG_NAME, "td")[0]
+        WebDriverWait(driver, 1000000).until(
+            EC.element_to_be_clickable(toggle)
+        ).click()  # Expands _game_details_box
         _game_details_box = game.parent.find_element(By.CLASS_NAME, "game-details-more")
         link = _game_details_box.find_element(By.CSS_SELECTOR, "a.game-details-btn-component")
         obj = Game(
@@ -70,7 +73,11 @@ def load_games_from_page(driver: WebDriver, games: list[WebElement]) -> list[Gam
             pgn=find_game_pgn(driver, _game_details_box),
         )
         game_objects.append(obj)
-        game.click()  # Closes _game_details_box
+        WebDriverWait(driver, 1000000).until(
+            EC.element_to_be_clickable(toggle)
+        ).click()  # Collapses _game_details_box
+        print(f"\t- {obj.title} ({obj.link})")
+
     return game_objects
 
 
@@ -92,8 +99,8 @@ def wait_next_page_load():
 
 
 class Scrapper:
-    def __init__(self):
-        self.driver: WebDriver = webdriver.Chrome()
+    def __init__(self, driver: WebDriver):
+        self.driver: WebDriver = driver
         self.collections: list[Collection] = []
 
     def scrape(self, username: str, password: str):
@@ -153,17 +160,18 @@ class Scrapper:
             self.driver.find_element(By.CLASS_NAME, "collection-games-wrapper-no-games")
             return
         except NoSuchElementException:
-            games = _safe_find(self.driver, By.CLASS_NAME, "game-item-component")
-            game_objects = load_games_from_page(self.driver, games)
-            collection.games.extend(game_objects)
+            pass
+        games = _safe_find(self.driver, By.CLASS_NAME, "game-item-component")
+        game_objects = load_games_from_page(self.driver, games)
+        collection.games.extend(game_objects)
 
     def _end(self):
         self.driver.close()
 
 
 class ScrapperAutoSaver(Scrapper):
-    def __init__(self, output: Path):
-        super().__init__()
+    def __init__(self, driver: WebDriver, output: Path):
+        super().__init__(driver)
         self.outdir = output
 
     def _retrieve_collections_lazy(self):
@@ -177,6 +185,37 @@ class ScrapperAutoSaver(Scrapper):
         for game in collection.games:
             file = self.outdir / collection.title / f"{game.title}.pgn"
             file.write_text(game.pgn, encoding="utf-8")
+
+
+def _chrome_driver(headless: bool = False) -> webdriver.Chrome:
+    from selenium.webdriver.chrome.service import Service as ChromeService
+    from selenium.webdriver.chrome.options import Options
+    from webdriver_manager.chrome import ChromeDriverManager
+
+    opts = Options()
+    if headless:
+        print("WARNING: Headless mode on Chrome might break.")
+        opts.headless = True
+    service = ChromeService(ChromeDriverManager().install())
+    return webdriver.Chrome(service=service, options=opts)
+
+
+def _firefox_driver(headless: bool = False) -> webdriver.Firefox:
+    from selenium.webdriver.firefox.service import Service as FirefoxService
+    from selenium.webdriver.firefox.options import Options
+    from webdriver_manager.firefox import GeckoDriverManager
+
+    service = FirefoxService(GeckoDriverManager().install())
+    opts = Options()
+    if headless:
+        opts.headless = True
+    return webdriver.Firefox(service=service, options=opts)
+
+
+DRIVERS = {
+    "chrome": _chrome_driver,
+    "firefox": _firefox_driver,
+}
 
 
 def main():
@@ -197,15 +236,32 @@ def main():
     parser.add_argument(
         "-o",
         "--output",
-        help="Directory where your library will be exported. It MUST be empty.",
+        help="Directory where your library will be exported. It MUST be empty",
         type=dir_type,
         required=True,
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "-b",
+        "--browser",
+        help="Browser driver to be used",
+        type=str,
+        required=False,
+        choices=DRIVERS.keys(),
+        default="firefox",
+    )
+    parser.add_argument(
+        "-H",
+        "--headless",
+        help="Run driver in headless mode (without GUI)",
+        action="store_true",
+    )
 
+    args = parser.parse_args()
     username = input("Username: ")
     password = getpass()
-    scrapper = ScrapperAutoSaver(args.output)
+    driver_factory = DRIVERS[args.browser]
+    driver = driver_factory(args.headless)
+    scrapper = ScrapperAutoSaver(driver, args.output)
     scrapper.scrape(username, password)
 
 
