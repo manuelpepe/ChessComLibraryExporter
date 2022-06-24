@@ -6,3 +6,5 @@ MANIFEST
 *.egg-info
 out/
 geckodriver.log
+dist/
+build/
