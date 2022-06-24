@@ -11,3 +11,4 @@ venv3/
 dist/
 build/
 library/
+.env
