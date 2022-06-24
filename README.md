@@ -11,7 +11,7 @@ A command line utility that uses Selenium (Chess.com please improve API support!
 $ git clone https://github.com/manuelpepe/ChessComLibraryExporter
 $ cd ChessComLibraryExporter
 $ pip install -r requirements.txt
-$ python chess_library_exporter.py -o ~/chess-library
+$ python chess_library_exporter.py
 Username: manuelpepe
 Password: 
 
@@ -23,7 +23,7 @@ Found 6 collections
 
 ```bash
 $ pip install ChessComLibraryExport
-$ chess_library_exporter -o ~/chess-library
+$ chess_library_exporter
 Username: manuelpepe
 Password: 
 
@@ -31,6 +31,9 @@ Found 6 collections
 ...
 ```
 
+
+By default, your library will be exported to a `library/` directory in your current working directory.
+You can change it with the `-o path/to/directory` parameter. 
 
 ## Support
 

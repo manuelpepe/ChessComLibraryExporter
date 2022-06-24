@@ -62,7 +62,7 @@ def load_games_from_page(driver: WebDriver, games: list[WebElement]) -> list[Gam
     game_objects = []
     for game in games:
         toggle = game.find_elements(By.TAG_NAME, "td")[0]
-        WebDriverWait(driver, 1000000).until(
+        WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable(toggle)
         ).click()  # Expands _game_details_box
         _game_details_box = game.parent.find_element(By.CLASS_NAME, "game-details-more")
@@ -73,7 +73,7 @@ def load_games_from_page(driver: WebDriver, games: list[WebElement]) -> list[Gam
             pgn=find_game_pgn(driver, _game_details_box),
         )
         game_objects.append(obj)
-        WebDriverWait(driver, 1000000).until(
+        WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable(toggle)
         ).click()  # Collapses _game_details_box
         print(f"\t- {obj.title} ({obj.link})")
@@ -224,9 +224,13 @@ def main():
 
     def dir_type(value):
         path = Path(value)
+        if not path.exists():
+            path.mkdir(exist_ok=True)
         if not path.is_dir():
-            raise NotADirectoryError(value)
+            print(f"ERROR!\n'{path}' is not a directory.")
+            raise ValueError(f"'{path}' is not a directory")
         if len(list(path.glob("*"))) > 0:
+            print(f"ERROR!\nDirectory '{path}' not empty.")
             raise ValueError(f"Directory {path} not empty")
         return path
 
@@ -236,9 +240,9 @@ def main():
     parser.add_argument(
         "-o",
         "--output",
-        help="Directory where your library will be exported. It MUST be empty",
+        help="Directory where your library will be exported",
         type=dir_type,
-        required=True,
+        default="library",
     )
     parser.add_argument(
         "-b",
