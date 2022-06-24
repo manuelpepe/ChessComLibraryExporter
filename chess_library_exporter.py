@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 
 from dataclasses import dataclass, field
@@ -169,6 +170,15 @@ class Scrapper:
         self.driver.close()
 
 
+def _get_next_filename(file: Path):
+    i = 2
+    base, ext = os.path.splitext(file)
+    while file.exists():
+        file = Path(f"{base}_({i}){ext}")
+        i += 1
+    return file
+
+
 class ScrapperAutoSaver(Scrapper):
     def __init__(self, driver: WebDriver, output: Path):
         super().__init__(driver)
@@ -178,12 +188,14 @@ class ScrapperAutoSaver(Scrapper):
         super()._retrieve_collections_lazy()
         for collection in self.collections:
             directory = self.outdir / collection.title
+            directory = _get_next_filename(directory)
             directory.mkdir()
 
     def _populate_games_into_collection(self, collection: Collection):
         super()._populate_games_into_collection(collection)
         for game in collection.games:
             file = self.outdir / collection.title / f"{game.title}.pgn"
+            file = _get_next_filename(file)
             file.write_text(game.pgn, encoding="utf-8")
 
 
