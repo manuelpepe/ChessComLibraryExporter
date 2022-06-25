@@ -38,7 +38,7 @@ def _safe_find(driver, *args, method: str = "find_elements", timeout: int = 20):
     return getattr(driver, method)(*args)
 
 
-def find_game_title(game: WebElement):
+def find_game_title(game: WebElement) -> str:
     try:
         _title = game.find_element(By.CLASS_NAME, "game-item-title")
         title = _title.text
@@ -48,7 +48,7 @@ def find_game_title(game: WebElement):
     return title
 
 
-def find_game_pgn(driver: WebDriver, game_details_box: WebElement):
+def find_game_pgn(driver: WebDriver, game_details_box: WebElement) -> str:
     share_button = game_details_box.find_element(By.CSS_SELECTOR, '[aria-label="Share"]')
     share_button.click()
     embed_component = _safe_find(
@@ -85,7 +85,7 @@ def load_games_from_page(driver: WebDriver, games: list[WebElement]) -> list[Gam
     return game_objects
 
 
-def get_next_page_button(driver) -> None | WebElement:
+def get_next_page_button(driver: WebDriver) -> None | WebElement:
     try:
         _next_page_button = driver.find_element(
             By.CSS_SELECTOR, '.ui_pagination-item-component[aria-label="Next Page"]'
@@ -113,7 +113,7 @@ class Scrapper:
         self._populate_games_into_collections()
         self._end()
 
-    def _login(self, username, password):
+    def _login(self, username: str, password: str):
         self.driver.get("https://www.chess.com/home")
         username_input = self.driver.find_element(By.ID, "username")
         username_input.send_keys(username)
@@ -159,7 +159,7 @@ class Scrapper:
             self._populate_page_into_collection(collection)
             next_page_button = get_next_page_button(self.driver)
 
-    def _populate_page_into_collection(self, collection):
+    def _populate_page_into_collection(self, collection: Collection):
         try:
             self.driver.find_element(By.CLASS_NAME, "collection-games-wrapper-no-games")
             return
