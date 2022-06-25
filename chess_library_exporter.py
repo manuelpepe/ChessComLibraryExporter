@@ -16,6 +16,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 
+__version__ = "0.4.0"
+
+
 @dataclass
 class Game:
     title: str
