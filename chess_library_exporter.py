@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import time
+import argparse
 
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -233,10 +234,7 @@ DRIVERS = {
 }
 
 
-def main():
-    import argparse
-    from getpass import getpass
-
+def parser() -> argparse.ArgumentParser:
     def dir_type(value):
         path = Path(value)
         if not path.exists():
@@ -274,8 +272,13 @@ def main():
         help="Run driver in headless mode (without GUI)",
         action="store_true",
     )
+    return parser
 
-    args = parser.parse_args()
+
+def main():
+    from getpass import getpass
+
+    args = parser().parse_args()
     username = input("Username: ")
     password = getpass()
     driver_factory = DRIVERS[args.browser]
