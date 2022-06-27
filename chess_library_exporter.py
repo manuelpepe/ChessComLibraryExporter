@@ -17,7 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 
-__version__ = "0.5.1"
+__version__ = "0.5.2"
 
 
 @dataclass
