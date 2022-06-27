@@ -9,7 +9,7 @@ with open(README, "r") as fp:
 
 setup(
     name="ChessComLibraryExporter",
-    version="0.5.2",
+    version="0.5.3",
     description="Download your whole Chess.com Library (chess.com/library)",
     author="Manuel Pepe",
     author_email="manuelpepe-dev@outlook.com.ar",
