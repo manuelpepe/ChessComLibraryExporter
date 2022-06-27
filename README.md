@@ -22,7 +22,7 @@ Found 6 collections
 **From the Pip-installed entrypoint:**
 
 ```bash
-$ pip install ChessComLibraryExport
+$ pip install ChessComLibraryExporter
 $ chess_library_exporter
 Username: manuelpepe
 Password: 
