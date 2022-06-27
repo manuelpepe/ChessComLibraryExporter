@@ -210,7 +210,7 @@ def _chrome_driver(headless: bool = False) -> webdriver.Chrome:
 
     opts = Options()
     if headless:
-        print("WARNING: Headless mode on Chrome might break.")
+        print("WARNING: Headless mode on Chrome might break. Turn off with -H parameter.")
         opts.headless = True
     service = ChromeService(ChromeDriverManager().install())
     return webdriver.Chrome(service=service, options=opts)
@@ -269,8 +269,8 @@ def parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-H",
         "--headless",
-        help="Run driver in headless mode (without GUI)",
-        action="store_true",
+        help="Disable headless mode (show browser GUI)",
+        action="store_false",
     )
     return parser
 
