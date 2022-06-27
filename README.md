@@ -37,4 +37,4 @@ You can change it with the `-o path/to/directory` parameter.
 
 ## Support
 
-Firefox and Chrome are supported (use `-b firefox` or `-b chrome`, defaults to firefox). Headless mode can also be activated with the `-H` flag (Only seems to work on firefox).
+Firefox and Chrome are supported (use `-b firefox` or `-b chrome`, defaults to firefox). Headless mode can also be deactivated with the `-H` flag (Headless mode seems to break on Chrome).
