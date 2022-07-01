@@ -18,6 +18,6 @@ setup(
     long_description_content_type="text/markdown",
     license="MIT",
     py_modules=["chess_library_exporter"],
-    install_requires=["selenium", "webdriver_manager"],
+    install_requires=["selenium", "webdriver_manager", "pathvalidate"],
     entry_points={"console_scripts": ["chess_library_exporter = chess_library_exporter:main"]},
 )

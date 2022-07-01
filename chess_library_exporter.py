@@ -14,7 +14,9 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException
+
+from pathvalidate import sanitize_filename
 
 
 __version__ = "0.5.3"
@@ -43,7 +45,7 @@ def find_game_title(game: WebElement) -> str:
     try:
         _title = game.find_element(By.CLASS_NAME, "game-item-title")
         title = _title.text
-    except NoSuchElementException as err:
+    except NoSuchElementException:
         _usernames = game.find_elements(By.CLASS_NAME, "game-item-username")
         title = " - ".join(u.text for u in _usernames)
     return title
@@ -95,6 +97,7 @@ def get_next_page_button(driver: WebDriver) -> None | WebElement:
             return _next_page_button
     except NoSuchElementException:
         return None
+    return None
 
 
 def wait_next_page_load():
@@ -175,7 +178,7 @@ class Scrapper:
 
 
 def _get_next_filename(file: Path):
-    i = 2
+    i = 1
     base, ext = os.path.splitext(file)
     while file.exists():
         file = Path(f"{base}_({i}){ext}")
@@ -191,14 +194,15 @@ class ScrapperAutoSaver(Scrapper):
     def _retrieve_collections_lazy(self):
         super()._retrieve_collections_lazy()
         for collection in self.collections:
-            directory = self.outdir / collection.title
+            directory = self.outdir / sanitize_filename(collection.title)
             directory = _get_next_filename(directory)
             directory.mkdir()
 
     def _populate_games_into_collection(self, collection: Collection):
         super()._populate_games_into_collection(collection)
         for game in collection.games:
-            file = self.outdir / collection.title / f"{game.title}.pgn"
+            file = self.outdir / sanitize_filename(collection.title)
+            file /= sanitize_filename(f"{game.title}.pgn")
             file = _get_next_filename(file)
             file.write_text(game.pgn, encoding="utf-8")
 
