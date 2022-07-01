@@ -5,13 +5,11 @@ A command line utility that uses Selenium (Chess.com please improve API support!
 
 ## Usage
 
-**Directly as a script:**
+**From PyPI:**
 
 ```bash
-$ git clone https://github.com/manuelpepe/ChessComLibraryExporter
-$ cd ChessComLibraryExporter
-$ pip install -r requirements.txt
-$ python chess_library_exporter.py
+$ pip install ChessComLibraryExporter
+$ chess_library_exporter
 Username: manuelpepe
 Password: 
 
@@ -19,11 +17,13 @@ Found 6 collections
 ...
 ```
 
-**From the Pip-installed entrypoint:**
+**From source:**
 
 ```bash
-$ pip install ChessComLibraryExporter
-$ chess_library_exporter
+$ git clone https://github.com/manuelpepe/ChessComLibraryExporter
+$ cd ChessComLibraryExporter
+$ pip install -r requirements.txt
+$ python chess_library_exporter.py
 Username: manuelpepe
 Password: 
 
