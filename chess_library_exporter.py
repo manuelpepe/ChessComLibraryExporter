@@ -19,7 +19,7 @@ from selenium.common.exceptions import NoSuchElementException
 from pathvalidate import sanitize_filename
 
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 
 @dataclass
