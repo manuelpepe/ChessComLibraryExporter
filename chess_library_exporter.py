@@ -17,6 +17,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
+from dotenv import load_dotenv
 from pathvalidate import sanitize_filename
 
 
@@ -281,6 +282,7 @@ def parser() -> argparse.ArgumentParser:
 
 
 def _get_credentials() -> tuple[str, str]:
+    load_dotenv()
     username = os.environ.get("CHESS_COM_LIBRARY_EXPORTER_USER", "")
     password = os.environ.get("CHESS_COM_LIBRARY_EXPORTER_PASS", "")
     if username == "" or password == "":
