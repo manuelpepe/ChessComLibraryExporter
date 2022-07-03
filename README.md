@@ -35,6 +35,8 @@ Found 6 collections
 By default, your library will be exported to a `library/` directory in your current working directory.
 You can change it with the `-o path/to/directory` parameter. 
 
+Credentials can also be loaded from the `CHESS_COM_LIBRARY_EXPORTER_USER` and `CHESS_COM_LIBRARY_EXPORTER_PASS` environment variables or from a `.env` file.
+
 ## Support
 
 Firefox and Chrome are supported (use `-b firefox` or `-b chrome`, defaults to firefox). Headless mode can also be deactivated with the `-H` flag (Headless mode seems to break on Chrome).

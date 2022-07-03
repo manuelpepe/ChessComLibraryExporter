@@ -4,8 +4,9 @@ import os
 import time
 import argparse
 
-from dataclasses import dataclass, field
 from pathlib import Path
+from getpass import getpass
+from dataclasses import dataclass, field
 
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -279,12 +280,18 @@ def parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main():
-    from getpass import getpass
+def _get_credentials() -> tuple[str, str]:
+    username = os.environ.get("CHESS_COM_LIBRARY_EXPORTER_USER", "")
+    password = os.environ.get("CHESS_COM_LIBRARY_EXPORTER_PASS", "")
+    if username == "" or password == "":
+        username = input("Username: ")
+        password = getpass()
+    return username, password
 
+
+def main():
     args = parser().parse_args()
-    username = input("Username: ")
-    password = getpass()
+    username, password = _get_credentials()
     driver_factory = DRIVERS[args.browser]
     driver = driver_factory(args.headless)
     scrapper = ScrapperAutoSaver(driver, args.output)
