@@ -1,0 +1,30 @@
+name: Package Application with Pyinstaller
+
+on:
+  push:
+    branches: [ master ]
+    tags:
+      - '*'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Package Application
+      uses: JackMcKew/pyinstaller-action-windows@main
+      with:
+        path: .
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: chess_library_exporter.exe
+        path: dist/windows/chess_library_exporter.exe
+    
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: "dist/windows/chess_library_exporter.exe"
+        omitName: true
