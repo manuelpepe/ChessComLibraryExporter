@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 from pathvalidate import sanitize_filename
 
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 
 @dataclass
